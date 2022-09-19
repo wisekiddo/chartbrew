@@ -247,8 +247,7 @@ class AxisChart {
               indexCheck = _.findIndex(
                 xAxisData.filtered,
                 (dateValue) => (
-                  new Date(dateValue).getTime()
-                      === new Date(yData[index][xAxisFieldName]).getTime()
+                  areDatesTheSame(dateValue, yData[index][xAxisFieldName], this.chart.interval)
                 )
               );
             }
@@ -397,10 +396,19 @@ class AxisChart {
 
       // now unify all the datasets
       // all the arrays on the Y Axis must correspond with only one array on X
+      // if we're dealing with weekly or hourly data, make sure to not add the same data twice
       let unifiedX = [];
-      this.axisData.x.map((arr) => {
-        unifiedX = _.concat(unifiedX, arr);
-        return arr;
+      this.axisData.x.forEach((arr, index) => {
+        if ((this.chart.timeInterval === "week" || this.chart.timeInterval === "hour") && index > 0) {
+          arr.forEach((item) => {
+            if (unifiedX.indexOf(item) === -1) {
+              const allItemsFound = arr.filter((x) => x === item);
+              unifiedX = _.concat(unifiedX, allItemsFound);
+            }
+          });
+        } else {
+          unifiedX = _.concat(unifiedX, arr);
+        }
       });
 
       if (this.chart.timeInterval === "week" || this.chart.timeInterval === "hour") {
@@ -421,7 +429,7 @@ class AxisChart {
         }
       }
 
-      unifiedX.map((x, index) => {
+      unifiedX.forEach((x, index) => {
         for (let i = 0; i < this.axisData.x.length; i++) {
           if (_.indexOf(this.axisData.x[i], x) === -1) {
             this.axisData.x[i].splice(index, 0, x);
@@ -433,15 +441,10 @@ class AxisChart {
             }
           }
         }
-        return x;
       });
 
       this.axisData.x = unifiedX;
     }
-
-    // console.log("this.axisData.x.length", this.axisData.x);
-    // console.log("this.axisData.y.length", this.axisData.y[0].length);
-    // console.log("this.axisData.y", this.axisData.y[0]);
 
     if (skipDataProcessing) {
       this.axisData.x = this.chart.chartData.data.labels;

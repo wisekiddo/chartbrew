@@ -157,8 +157,8 @@ module.exports = (app) => {
     let logoPath;
 
     req.pipe(req.busboy);
-    req.busboy.on("file", (fieldname, file, filename) => {
-      const newFilename = `${nanoid(6)}-${filename}`;
+    req.busboy.on("file", (fieldname, file, info) => {
+      const newFilename = `${nanoid(6)}-${info.filename}`;
       const uploadPath = path.normalize(`${__dirname}/../uploads/${newFilename}`);
       logoPath = `uploads/${newFilename}`;
 
@@ -282,7 +282,7 @@ module.exports = (app) => {
   app.post("/project/:id/template/:template", verifyToken, (req, res) => {
     return checkAccess(req)
       .then((teamRole) => {
-        const permission = accessControl.can(teamRole.role).createAny("project");
+        const permission = accessControl.can(teamRole.role).createAny("connection");
         if (!permission.granted) {
           return new Promise((resolve, reject) => reject(new Error(401)));
         }
